@@ -67,6 +67,8 @@ fun HomeScreen() {
             when (currentViewMode) {
                 ViewMode.YEAR -> YearView()
                 ViewMode.MONTH -> MonthView(
+                    selectedDate = targetDate,
+                    onDateSelected = { newDate -> targetDate = newDate },
                     initialSelectedDate = targetDate,
                     onAddScheduleClick = { selectedDate ->
                         showToast(context, "添加${selectedDate}的日程（待实现）")
@@ -84,7 +86,7 @@ fun HomeScreen() {
             onDateSelected = { selectedDate ->
                 // 选择日期后，更新目标日期并切换到对应月份
                 targetDate = selectedDate
-                // 自动切换到月视图（可选，确保用户在月视图中看到跳转结果）
+                // 自动切换到月视图
                 currentViewMode = ViewMode.MONTH
                 showToast(context, "已跳转到${selectedDate}")
             },

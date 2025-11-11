@@ -68,8 +68,15 @@ fun DatePicker(
 
     // 监听年份滚动更新选中值
     LaunchedEffect(yearScrollState.value) {
-        val centerIndex = (yearScrollState.value / itemHeightPx + 0.5f).roundToInt()
-        val newYear = minYear + centerIndex
+        // 去掉+0.5f，直接取整后修正（解决向上取整偏差）
+        val centerIndex = (yearScrollState.value / itemHeightPx).toInt()
+        // 修正：当滚动超过item的1/4高度时，视为下一个索引
+        val adjustedIndex = if (yearScrollState.value % itemHeightPx > itemHeightPx * 0.25f) {
+            centerIndex + 1
+        } else {
+            centerIndex
+        }
+        val newYear = minYear + adjustedIndex
         if (newYear in minYear..maxYear) {
             selectedYear = newYear
         }
@@ -77,21 +84,59 @@ fun DatePicker(
 
     // 监听月份滚动更新选中值
     LaunchedEffect(monthScrollState.value) {
-        val centerIndex = (monthScrollState.value / itemHeightPx + 0.5f).roundToInt()
-        val newMonth = centerIndex + 1
+        val centerIndex = (monthScrollState.value / itemHeightPx).toInt()
+        val adjustedIndex = if (monthScrollState.value % itemHeightPx > itemHeightPx * 0.25f) {
+            centerIndex + 1
+        } else {
+            centerIndex
+        }
+        val newMonth = adjustedIndex + 1 // 月份1-12，索引+1
         if (newMonth in 1..12) {
             selectedMonth = newMonth
         }
     }
 
-    // 监听日期滚动更新选中值（动态适配当月最大天数）
+    // 监听日期滚动更新选中值（核心修复）
     LaunchedEffect(dayScrollState.value, selectedYear, selectedMonth) {
         val currentMaxDay = getMaxDayOfMonth(selectedYear, selectedMonth)
-        val centerIndex = (dayScrollState.value / itemHeightPx + 0.5f).roundToInt()
-        selectedDay = (centerIndex + 1).coerceIn(1, currentMaxDay)
+        val centerIndex = (dayScrollState.value / itemHeightPx).toInt()
+        // 关键：当滚动超过item的1/4高度时，才视为下一个日期
+        val adjustedIndex = if (dayScrollState.value % itemHeightPx > itemHeightPx * 0.25f) {
+            centerIndex + 1
+        } else {
+            centerIndex
+        }
+        selectedDay = (adjustedIndex + 1).coerceIn(1, currentMaxDay) // 日期1-31，索引+1
     }
 
     Column(modifier = Modifier.fillMaxWidth()) {
+        // 单位标签（年/月/日）
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            Text(
+                "年",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.width(60.dp),
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            )
+            Text(
+                "月",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.width(60.dp),
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            )
+            Text(
+                "日",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.width(60.dp),
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            )
+        }
+
         // 滚动选择区域（限制高度，显示中间选中项）
         Box(
             modifier = Modifier
@@ -136,33 +181,6 @@ fun DatePicker(
                     modifier = Modifier.width(60.dp)
                 )
             }
-        }
-
-        // 单位标签（年/月/日）
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            Text(
-                "年",
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.width(60.dp),
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-            )
-            Text(
-                "月",
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.width(60.dp),
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-            )
-            Text(
-                "日",
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.width(60.dp),
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-            )
         }
 
         // 确认按钮（触发回调）

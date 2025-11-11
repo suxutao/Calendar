@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.dp
 import java.time.LocalDate
 
 /**
- * 日期选择器弹窗（修复AlertDialog参数不匹配问题）
+ * 日期选择器弹窗
  */
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
@@ -42,7 +42,7 @@ fun DatePickerDialog(
         AlertDialog(
             onDismissRequest = onDismiss, // 必需参数：点击外部或返回键的回调
             modifier = Modifier.width(320.dp),
-            // 标题（可选）
+            // 标题
             title = {
                 Text(
                     text = "选择日期",
@@ -51,7 +51,7 @@ fun DatePickerDialog(
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center
                 )
             },
-            // 主要内容区域（替代原来的content参数）
+            // 主要内容区域
             text = {
                 DatePicker(
                     initialDate = initialDate,

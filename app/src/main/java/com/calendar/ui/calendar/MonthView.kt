@@ -56,6 +56,8 @@ import java.time.YearMonth
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun MonthView(
+    selectedDate: LocalDate,
+    onDateSelected: (LocalDate) -> Unit,
     initialSelectedDate: LocalDate? = null,
     onAddScheduleClick: (LocalDate) -> Unit = {}
 ) {
@@ -63,7 +65,6 @@ fun MonthView(
     val today = LocalDate.now()
     val initialDate = initialSelectedDate ?: today
     var currentMonth by remember { mutableStateOf(YearMonth.from(initialDate)) }
-    var selectedDate by remember { mutableStateOf(initialDate) }
     var dragTotal by remember { mutableFloatStateOf(0f) }
     val swipeThreshold = 100f
 
@@ -73,7 +74,6 @@ fun MonthView(
     LaunchedEffect(initialSelectedDate) {
         if (initialSelectedDate != null) {
             currentMonth = YearMonth.from(initialSelectedDate)
-            selectedDate = initialSelectedDate
         }
     }
 
@@ -192,7 +192,7 @@ fun MonthView(
                                 pressedElevation = 8.dp
                             ),
                             colors = cardColors,
-                            onClick = { selectedDate = date }
+                            onClick = { onDateSelected(date) }
                         ) {
                             Box(
                                 modifier = Modifier.fillMaxSize(),
@@ -220,7 +220,7 @@ fun MonthView(
         FloatingActionButton(
             onClick = {
                 currentMonth = DateUtils.getCurrentMonth()
-                selectedDate = today
+                onDateSelected(LocalDate.now())
             },
             modifier = Modifier
                 .align(Alignment.BottomStart)
