@@ -1,0 +1,53 @@
+package com.calendar
+
+import android.annotation.SuppressLint
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import com.calendar.ui.home.HomeScreen
+import com.calendar.ui.theme.CalendarTheme
+
+class MainActivity : ComponentActivity() {
+    @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        setContent {
+            CalendarTheme {
+                Scaffold(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    HomeScreen(
+                        onScheduleClick = { /* 日程图标点击逻辑 */ },
+                        onSettingsClick = { /* 设置图标点击逻辑 */ }
+                    )
+                }
+            }
+        }
+    }
+}
+
+
+
+// 预览函数
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+@Preview(showBackground = true)
+@Composable
+private fun MainActivityPreview() {
+    CalendarTheme {
+        Scaffold {
+            HomeScreen(
+                onScheduleClick = {},
+                onSettingsClick = {}
+            )
+        }
+    }
+}

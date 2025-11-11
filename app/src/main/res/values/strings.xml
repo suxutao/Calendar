@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">日历</string>
+    <string name="schedule">日程</string>
+    <string name="settings">设置</string>
+    <string name="year_view">年</string>
+    <string name="month_view">月</string>
+    <string name="week_view">周</string>
+    <string name="day_view">日</string>
+</resources>
