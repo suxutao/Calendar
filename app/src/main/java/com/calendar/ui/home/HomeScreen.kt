@@ -21,8 +21,10 @@ import com.calendar.ui.calendar.MonthView
 import com.calendar.ui.calendar.WeekView
 import com.calendar.ui.calendar.YearView
 import com.calendar.ui.components.CalendarTopBar
+import com.calendar.ui.components.DatePickerDialog
 import com.calendar.ui.components.ViewModeToggleRow
 import com.calendar.ui.components.showToast
+import java.time.LocalDate
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -32,6 +34,10 @@ fun HomeScreen() {
     // 本地状态管理当前视图模式（后续可迁移到ViewModel）
     var currentViewMode by remember { mutableStateOf(ViewMode.MONTH) }
 
+    var showDatePicker by remember { mutableStateOf(false) } // 控制弹窗显示
+    var targetDate by remember { mutableStateOf(LocalDate.now()) } // 选中的目标日期
+
+
     // 主布局容器
     Column(
         modifier = Modifier.fillMaxSize()
@@ -39,7 +45,7 @@ fun HomeScreen() {
         // 顶部导航栏
         CalendarTopBar(
             onScheduleClick = { showToast(context, "日程列表（待实现）") },
-            onDateJumpClick = { showToast(context, "日期跳转（待实现）") },
+            onDateJumpClick = { showDatePicker = true },
             onImportExportClick = { showToast(context, "日程导入导出（待实现）") },
             onSettingsClick = { showToast(context, "设置页面（待实现）") }
         )
@@ -61,6 +67,7 @@ fun HomeScreen() {
             when (currentViewMode) {
                 ViewMode.YEAR -> YearView()
                 ViewMode.MONTH -> MonthView(
+                    initialSelectedDate = targetDate,
                     onAddScheduleClick = { selectedDate ->
                         showToast(context, "添加${selectedDate}的日程（待实现）")
                     }
@@ -69,5 +76,19 @@ fun HomeScreen() {
                 ViewMode.DAY -> DayView()
             }
         }
+
+        // 显示日期选择器弹窗
+        DatePickerDialog(
+            visible = showDatePicker,
+            initialDate = targetDate, // 初始显示当前选中的日期
+            onDateSelected = { selectedDate ->
+                // 选择日期后，更新目标日期并切换到对应月份
+                targetDate = selectedDate
+                // 自动切换到月视图（可选，确保用户在月视图中看到跳转结果）
+                currentViewMode = ViewMode.MONTH
+                showToast(context, "已跳转到${selectedDate}")
+            },
+            onDismiss = { showDatePicker = false }
+        )
     }
 }

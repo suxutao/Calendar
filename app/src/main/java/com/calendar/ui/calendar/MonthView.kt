@@ -36,6 +36,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -55,16 +56,26 @@ import java.time.YearMonth
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun MonthView(
+    initialSelectedDate: LocalDate? = null,
     onAddScheduleClick: (LocalDate) -> Unit = {}
 ) {
     // 核心状态管理
-    var currentMonth by remember { mutableStateOf(DateUtils.getCurrentMonth()) }
     val today = LocalDate.now()
-    var selectedDate by remember { mutableStateOf(today) }
+    val initialDate = initialSelectedDate ?: today
+    var currentMonth by remember { mutableStateOf(YearMonth.from(initialDate)) }
+    var selectedDate by remember { mutableStateOf(initialDate) }
     var dragTotal by remember { mutableFloatStateOf(0f) }
     val swipeThreshold = 100f
 
     val weekTitles = listOf("日", "一", "二", "三", "四", "五", "六")
+
+    // 监听 initialSelectedDate 变化，强制更新月份和选中日期
+    LaunchedEffect(initialSelectedDate) {
+        if (initialSelectedDate != null) {
+            currentMonth = YearMonth.from(initialSelectedDate)
+            selectedDate = initialSelectedDate
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
