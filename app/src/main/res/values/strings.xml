@@ -6,4 +6,7 @@
     <string name="month_view">月</string>
     <string name="week_view">周</string>
     <string name="day_view">日</string>
+    <string name="more_options">更多选项</string>
+    <string name="date_jump">日期跳转</string>
+    <string name="import_export">日程导入与导出</string>
 </resources>

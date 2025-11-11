@@ -25,10 +25,7 @@ class MainActivity : ComponentActivity() {
                 Scaffold(
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    HomeScreen(
-                        onScheduleClick = { /* 日程图标点击逻辑 */ },
-                        onSettingsClick = { /* 设置图标点击逻辑 */ }
-                    )
+                    HomeScreen()
                 }
             }
         }
@@ -44,10 +41,7 @@ class MainActivity : ComponentActivity() {
 private fun MainActivityPreview() {
     CalendarTheme {
         Scaffold {
-            HomeScreen(
-                onScheduleClick = {},
-                onSettingsClick = {}
-            )
+            HomeScreen()
         }
     }
 }
