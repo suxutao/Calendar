@@ -132,12 +132,6 @@ private fun ScheduleButton(
             pressedElevation = 2.dp
         )
     ) {
-        Icon(
-            imageVector = Icons.Default.DateRange,
-            contentDescription = null,
-            modifier = Modifier.size(16.dp)
-        )
-        Spacer(modifier = Modifier.width(4.dp))
         Text(
             text = "日程",
             style = MaterialTheme.typography.labelLarge
