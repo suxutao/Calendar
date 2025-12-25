@@ -8,5 +8,6 @@ enum class ReminderType {
     THIRTY_MINUTES,
     ONE_HOUR,
     TWO_HOURS,
-    THREE_HOURS
+    THREE_HOURS,
+    ONE_DAY
 }
