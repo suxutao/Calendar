@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -37,54 +39,62 @@ fun HomeScreen() {
     var showAddScheduleScreen by remember { mutableStateOf(false) }
     var showScheduleListScreen by remember { mutableStateOf(false) }
     var targetDate by remember { mutableStateOf(LocalDate.now()) }
-    
+
     val scheduleViewModel: ScheduleViewModel = viewModel()
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        CalendarTopBar(
-            onScheduleClick = { showScheduleListScreen = true },
-            onDateJumpClick = { showDatePicker = true },
-            onImportExportClick = { showToast(context, "日程导入导出（待实现）") },
-            onSettingsClick = { showToast(context, "设置页面（待实现）") }
-        )
-
-        CalendarActionBar(
-            currentMode = currentViewMode,
-            onModeChanged = { currentViewMode = it },
-            onScheduleClick = { showScheduleListScreen = true },
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-        )
-
-        Box(
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background
+    ) { paddingValues ->
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(8.dp)
+                .padding(paddingValues)
         ) {
-            when (currentViewMode) {
-                ViewMode.MONTH -> MonthView(
-                    selectedDate = targetDate,
-                    onDateSelected = { newDate -> targetDate = newDate },
-                    initialSelectedDate = targetDate,
-                    onAddScheduleClick = { selectedDate ->
-                        targetDate = selectedDate
-                        showAddScheduleScreen = true
-                    }
-                )
-                ViewMode.WEEK -> WeekView(
-                    selectedDate = targetDate,
-                    onDateSelected = { targetDate = it },
-                    onAddScheduleClick = { selectedDate ->
-                        targetDate = selectedDate
-                        showAddScheduleScreen = true
-                    }
-                )
-                ViewMode.DAY -> DayView(
-                    selectedDate = targetDate,
-                    onAddScheduleClick = { selectedDate ->
-                        targetDate = selectedDate
-                        showAddScheduleScreen = true
-                    }
-                )
+            CalendarTopBar(
+                onScheduleClick = { showScheduleListScreen = true },
+                onDateJumpClick = { showDatePicker = true },
+                onImportExportClick = { showToast(context, "日程导入导出（待实现）") },
+                onSettingsClick = { showToast(context, "设置页面（待实现）") }
+            )
+
+            CalendarActionBar(
+                currentMode = currentViewMode,
+                onModeChanged = { currentViewMode = it },
+                onScheduleClick = { showScheduleListScreen = true },
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 8.dp)
+            ) {
+                when (currentViewMode) {
+                    ViewMode.MONTH -> MonthView(
+                        selectedDate = targetDate,
+                        onDateSelected = { newDate -> targetDate = newDate },
+                        initialSelectedDate = targetDate,
+                        onAddScheduleClick = { selectedDate ->
+                            targetDate = selectedDate
+                            showAddScheduleScreen = true
+                        }
+                    )
+                    ViewMode.WEEK -> WeekView(
+                        selectedDate = targetDate,
+                        onDateSelected = { targetDate = it },
+                        onAddScheduleClick = { selectedDate ->
+                            targetDate = selectedDate
+                            showAddScheduleScreen = true
+                        }
+                    )
+                    ViewMode.DAY -> DayView(
+                        selectedDate = targetDate,
+                        onAddScheduleClick = { selectedDate ->
+                            targetDate = selectedDate
+                            showAddScheduleScreen = true
+                        }
+                    )
+                }
             }
         }
     }
