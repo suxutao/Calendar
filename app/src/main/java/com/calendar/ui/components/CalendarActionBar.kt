@@ -64,6 +64,7 @@ fun CalendarActionBar(
 
         ScheduleButton(
             onClick = onScheduleClick,
+            isSelected = currentMode == ViewMode.SCHEDULE,
             modifier = Modifier.weight(1f)
         )
     }
@@ -107,6 +108,7 @@ private fun ActionButton(
 @Composable
 private fun ScheduleButton(
     onClick: () -> Unit,
+    isSelected: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     Button(
@@ -114,12 +116,20 @@ private fun ScheduleButton(
         modifier = modifier.height(40.dp),
         shape = RoundedCornerShape(8.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.tertiary,
-            contentColor = MaterialTheme.colorScheme.onTertiary
+            containerColor = if (isSelected) {
+                MaterialTheme.colorScheme.tertiary
+            } else {
+                MaterialTheme.colorScheme.surfaceVariant
+            },
+            contentColor = if (isSelected) {
+                MaterialTheme.colorScheme.onTertiary
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            }
         ),
         elevation = ButtonDefaults.buttonElevation(
-            defaultElevation = 2.dp,
-            pressedElevation = 1.dp
+            defaultElevation = if (isSelected) 4.dp else 1.dp,
+            pressedElevation = 2.dp
         )
     ) {
         Icon(

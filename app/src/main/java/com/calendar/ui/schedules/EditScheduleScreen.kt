@@ -2,6 +2,7 @@ package com.calendar.ui.schedules
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,6 +19,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Title
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -32,8 +34,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -235,18 +240,40 @@ fun EditScheduleScreen(
                     if (!isAllDay) {
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        TimeDisplayRow(
+                        TimePickerRow(
+                            icon = Icons.Default.Schedule,
                             label = "开始时间",
-                            value = String.format("%02d:%02d", startHour, startMinute),
-                            leadingIcon = Icons.Default.Schedule
+                            hour = startHour,
+                            minute = startMinute,
+                            onTimeChange = { hour, minute ->
+                                startHour = hour
+                                startMinute = minute
+                                if (endHour * 60 + endMinute <= startHour * 60 + startMinute) {
+                                    endHour = (startHour + 1) % 24
+                                    endMinute = startMinute
+                                }
+                            }
                         )
 
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        TimeDisplayRow(
+                        TimePickerRow(
+                            icon = Icons.Default.Schedule,
                             label = "结束时间",
-                            value = String.format("%02d:%02d", endHour, endMinute),
-                            leadingIcon = Icons.Default.Schedule
+                            hour = endHour,
+                            minute = endMinute,
+                            onTimeChange = { hour, minute ->
+                                val newEndTotal = hour * 60 + minute
+                                val startTotal = startHour * 60 + startMinute
+                                if (newEndTotal <= startTotal) {
+                                    val newEnd = startTotal + 30
+                                    endHour = (newEnd / 60) % 24
+                                    endMinute = newEnd % 60
+                                } else {
+                                    endHour = hour
+                                    endMinute = minute
+                                }
+                            }
                         )
                     }
                 }
@@ -394,6 +421,78 @@ private fun TimeDisplayRow(
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.Medium
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TimePickerRow(
+    icon: ImageVector,
+    label: String,
+    hour: Int,
+    minute: Int,
+    onTimeChange: (Int, Int) -> Unit
+) {
+    var showTimePicker by remember { mutableStateOf(false) }
+    val timePickerState = rememberTimePickerState(
+        initialHour = hour,
+        initialMinute = minute
+    )
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { showTimePicker = true },
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Spacer(modifier = Modifier.weight(1f))
+        Surface(
+            onClick = { showTimePicker = true },
+            shape = RoundedCornerShape(8.dp),
+            color = MaterialTheme.colorScheme.primaryContainer
+        ) {
+            Text(
+                text = String.format("%02d:%02d", hour, minute),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+            )
+        }
+    }
+
+    if (showTimePicker) {
+        AlertDialog(
+            onDismissRequest = { showTimePicker = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onTimeChange(timePickerState.hour, timePickerState.minute)
+                        showTimePicker = false
+                    }
+                ) {
+                    Text("确定", color = MaterialTheme.colorScheme.primary)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showTimePicker = false }) {
+                    Text("取消", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            },
+            text = {
+                TimePicker(state = timePickerState)
+            }
         )
     }
 }

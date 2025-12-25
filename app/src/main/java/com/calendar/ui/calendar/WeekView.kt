@@ -64,7 +64,8 @@ import java.util.Locale
 fun WeekView(
     selectedDate: LocalDate,
     onDateSelected: (LocalDate) -> Unit,
-    onAddScheduleClick: (LocalDate) -> Unit = {}
+    onAddScheduleClick: (LocalDate) -> Unit = {},
+    onScheduleClick: (Schedule) -> Unit = {}
 ) {
     val today = LocalDate.now()
     var currentDate by remember { mutableStateOf(selectedDate) }
@@ -121,7 +122,8 @@ fun WeekView(
                 onDateClick = { date ->
                     currentDate = date
                     onDateSelected(date)
-                }
+                },
+                onScheduleClick = onScheduleClick
             )
 
             FloatingActionButton(
@@ -241,7 +243,8 @@ fun WeekScheduleGrid(
     weekDays: List<CalendarDay>,
     currentDate: LocalDate,
     weekSchedules: Map<LocalDate, List<Schedule>>,
-    onDateClick: (LocalDate) -> Unit
+    onDateClick: (LocalDate) -> Unit,
+    onScheduleClick: (Schedule) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -256,7 +259,8 @@ fun WeekScheduleGrid(
                 calendarDay = calendarDay,
                 isSelected = calendarDay.date == currentDate,
                 schedules = schedules,
-                onDateClick = onDateClick
+                onDateClick = onDateClick,
+                onScheduleClick = onScheduleClick
             )
         }
     }
@@ -268,7 +272,8 @@ fun DayScheduleRow(
     calendarDay: CalendarDay,
     isSelected: Boolean,
     schedules: List<Schedule>,
-    onDateClick: (LocalDate) -> Unit
+    onDateClick: (LocalDate) -> Unit,
+    onScheduleClick: (Schedule) -> Unit
 ) {
     val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
@@ -345,7 +350,8 @@ fun DayScheduleRow(
                     schedules.take(3).forEach { schedule ->
                         ScheduleBriefCard(
                             schedule = schedule,
-                            timeFormatter = timeFormatter
+                            timeFormatter = timeFormatter,
+                            onClick = { onScheduleClick(schedule) }
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                     }
@@ -368,7 +374,8 @@ fun DayScheduleRow(
 @Composable
 fun ScheduleBriefCard(
     schedule: Schedule,
-    timeFormatter: DateTimeFormatter
+    timeFormatter: DateTimeFormatter,
+    onClick: () -> Unit = {}
 ) {
     val startDateTime = Instant.ofEpochMilli(schedule.startTime)
         .atZone(ZoneId.systemDefault())
@@ -378,7 +385,9 @@ fun ScheduleBriefCard(
         .toLocalDateTime()
 
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
         shape = RoundedCornerShape(8.dp),
         color = if (schedule.isAllDay) {
             MaterialTheme.colorScheme.tertiaryContainer

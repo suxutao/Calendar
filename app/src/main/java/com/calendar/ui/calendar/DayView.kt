@@ -8,81 +8,93 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.calendar.model.Schedule
 import com.calendar.viewmodel.ScheduleViewModel
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.time.LocalTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
 
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
+
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun DayView(
     selectedDate: LocalDate = LocalDate.now(),
-    onAddScheduleClick: (LocalDate) -> Unit = {}
+    onAddScheduleClick: (LocalDate) -> Unit = {},
+    onScheduleClick: (Schedule) -> Unit = {}
 ) {
-    val context = LocalContext.current
     val viewModel: ScheduleViewModel = viewModel()
-    viewModel.setSelectedDate(selectedDate)
-    val date by viewModel.selectedDate.observeAsState(initial = selectedDate)
     val allSchedules by viewModel.allSchedules.collectAsState(initial = emptyList())
-    
+
+    var currentDate by remember { mutableStateOf(selectedDate) }
     val todaySchedules = allSchedules.filter { schedule ->
-        val scheduleDate = LocalDateTime.ofInstant(
-            Instant.ofEpochMilli(schedule.startTime),
-            ZoneId.systemDefault()
-        ).toLocalDate()
-        scheduleDate == date
+        val scheduleStart = Instant.ofEpochMilli(schedule.startTime).atZone(ZoneId.systemDefault())
+        val scheduleEnd = Instant.ofEpochMilli(schedule.endTime).atZone(ZoneId.systemDefault())
+        val currentStart = currentDate.atStartOfDay(ZoneId.systemDefault())
+        val currentEnd = currentDate.plusDays(1).atStartOfDay(ZoneId.systemDefault())
+
+        if (schedule.isAllDay) {
+            val scheduleDate = scheduleStart.toLocalDate()
+            scheduleDate == currentDate
+        } else {
+            scheduleStart.isBefore(currentEnd) && scheduleEnd.isAfter(currentStart)
+        }
     }.sortedBy { schedule -> schedule.startTime }
-    
+
+    LaunchedEffect(selectedDate) {
+        currentDate = selectedDate
+        viewModel.setSelectedDate(currentDate)
+    }
+
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            DayHeader(date = date)
-            
+            DayHeader(
+                date = currentDate,
+                onPreviousDay = { currentDate = currentDate.minusDays(1) },
+                onNextDay = { currentDate = currentDate.plusDays(1) }
+            )
+
             Box(modifier = Modifier.fillMaxSize()) {
-                Column(modifier = Modifier.fillMaxSize()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                ) {
                     TimeAxis()
-                    
+
                     ScheduleArea(
                         schedules = todaySchedules,
-                        onScheduleClick = { },
-                        onScheduleDelete = { }
+                        onScheduleClick = onScheduleClick
                     )
                 }
-                
+
                 FloatingActionButton(
-                    onClick = { onAddScheduleClick(date) },
+                    onClick = { onAddScheduleClick(currentDate) },
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .padding(16.dp),
@@ -102,38 +114,63 @@ fun DayView(
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun DayHeader(date: LocalDate) {
+fun DayHeader(
+    date: LocalDate,
+    onPreviousDay: () -> Unit,
+    onNextDay: () -> Unit
+) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.surface,
         tonalElevation = 2.dp,
         shadowElevation = 2.dp
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(horizontal = 8.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = date.format(DateTimeFormatter.ofPattern("yyyy年 M月d日")),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            
-            Spacer(modifier = Modifier.height(4.dp))
-            
-            Surface(
-                shape = RoundedCornerShape(16.dp),
-                color = MaterialTheme.colorScheme.primaryContainer
+            IconButton(onClick = onPreviousDay) {
+                Icon(
+                    imageVector = Icons.Default.ChevronLeft,
+                    contentDescription = "前一天",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = date.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.getDefault()),
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+                    text = date.format(DateTimeFormatter.ofPattern("yyyy年 M月d日")),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer
+                ) {
+                    Text(
+                        text = date.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.getDefault()),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+                    )
+                }
+            }
+
+            IconButton(onClick = onNextDay) {
+                Icon(
+                    imageVector = Icons.Default.ChevronRight,
+                    contentDescription = "后一天",
+                    tint = MaterialTheme.colorScheme.primary
                 )
             }
         }
@@ -172,8 +209,7 @@ fun TimeAxis() {
 @Composable
 fun ScheduleArea(
     schedules: List<Schedule>,
-    onScheduleClick: (Schedule) -> Unit,
-    onScheduleDelete: (Schedule) -> Unit
+    onScheduleClick: (Schedule) -> Unit
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         Surface(
@@ -181,7 +217,7 @@ fun ScheduleArea(
             color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f)
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
-                (0..23).forEach { hour ->
+                (0..23).forEach { _ ->
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -194,18 +230,15 @@ fun ScheduleArea(
                 }
             }
         }
-        
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = 8.dp)
-        ) {
-            items(schedules, key = { it.id }) { schedule ->
-                ScheduleItemImproved(
-                    schedule = schedule,
-                    onClick = { onScheduleClick(schedule) },
-                    onDelete = { onScheduleDelete(schedule) }
-                )
-            }
+
+        schedules.forEachIndexed { index, schedule ->
+            ScheduleCard(
+                schedule = schedule,
+                schedules = schedules,
+                index = index,
+                totalCount = schedules.size,
+                onScheduleClick = { onScheduleClick(schedule) }
+            )
         }
     }
 }
@@ -213,10 +246,12 @@ fun ScheduleArea(
 @SuppressLint("DefaultLocale")
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun ScheduleItemImproved(
+fun ScheduleCard(
     schedule: Schedule,
-    onClick: () -> Unit,
-    onDelete: () -> Unit
+    schedules: List<Schedule>,
+    index: Int,
+    totalCount: Int,
+    onScheduleClick: () -> Unit
 ) {
     val startTime = LocalDateTime.ofInstant(
         Instant.ofEpochMilli(schedule.startTime),
@@ -226,82 +261,151 @@ fun ScheduleItemImproved(
         Instant.ofEpochMilli(schedule.endTime),
         ZoneId.systemDefault()
     ).toLocalTime()
-    
+
     val startMinutes = startTime.hour * 60 + startTime.minute
     val endMinutes = endTime.hour * 60 + endTime.minute
-    val height = maxOf((endMinutes - startMinutes).dp, 50.dp)
-    
-    Card(
+    val itemHeight = maxOf((endMinutes - startMinutes).dp, 50.dp)
+    val topOffset = startMinutes.dp
+
+    val columnCount = calculateColumnCount(schedules = schedules, currentIndex = index)
+    val columnWidth = 1f / columnCount
+    val startColumn = calculateStartColumn(schedules = schedules, currentIndex = index)
+    val cardOffset = (startColumn * columnWidth * 100).toInt() / 100f + 0.02f
+    val cardWidth = columnWidth - 0.04f
+
+    Box(
         modifier = Modifier
-            .padding(start = 8.dp, end = 16.dp, top = 4.dp, bottom = 4.dp)
-            .offset(y = startMinutes.dp)
             .fillMaxWidth()
-            .height(height)
-            .clickable { onClick() }
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onLongPress = { onDelete() }
-                )
-            },
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            .height(1440.dp)
+            .padding(start = 56.dp)
     ) {
-        Row(
+        Box(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(12.dp),
-            verticalAlignment = Alignment.Top
+                .offset(y = topOffset)
+                .fillMaxWidth(cardWidth)
+                .height(itemHeight)
+                .padding(start = (cardOffset * 100).dp.coerceAtMost(16.dp))
         ) {
             Surface(
                 modifier = Modifier
-                    .width(4.dp)
-                    .height(20.dp),
-                shape = RoundedCornerShape(2.dp),
-                color = MaterialTheme.colorScheme.primary
-            ) {}
-            
-            Spacer(modifier = Modifier.width(12.dp))
-            
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = schedule.title,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                
-                if (schedule.description != null && schedule.description.isNotEmpty()) {
-                    Text(
-                        text = schedule.description,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(top = 2.dp)
-                    )
+                    .fillMaxSize()
+                    .clickable { onScheduleClick() },
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 2.dp,
+                shadowElevation = 2.dp
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Surface(
+                            modifier = Modifier
+                                .width(4.dp)
+                                .height(20.dp),
+                            shape = RoundedCornerShape(2.dp),
+                            color = MaterialTheme.colorScheme.primary
+                        ) {}
+
+                        Spacer(modifier = Modifier.width(12.dp))
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = schedule.title,
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+
+                            if (schedule.description != null && schedule.description.isNotEmpty()) {
+                                Text(
+                                    text = schedule.description,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.padding(top = 2.dp)
+                                )
+                            }
+
+                            Text(
+                                text = String.format("%02d:%02d - %02d:%02d",
+                                    startTime.hour, startTime.minute,
+                                    endTime.hour, endTime.minute),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(top = 4.dp)
+                            )
+                        }
+                    }
                 }
-                
-                Text(
-                    text = String.format("%02d:%02d - %02d:%02d", 
-                        startTime.hour, startTime.minute, 
-                        endTime.hour, endTime.minute),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
             }
-            
-            Icon(
-                imageVector = Icons.Default.ChevronRight,
-                contentDescription = "详情",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                modifier = Modifier.size(20.dp)
-            )
         }
     }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+private fun calculateColumnCount(schedules: List<Schedule>, currentIndex: Int): Int {
+    val currentSchedule = schedules[currentIndex]
+    val currentStart = Instant.ofEpochMilli(currentSchedule.startTime).atZone(ZoneId.systemDefault())
+    val currentEnd = Instant.ofEpochMilli(currentSchedule.endTime).atZone(ZoneId.systemDefault())
+
+    var maxOverlaps = 1
+    var overlapCount = 1
+
+    for (i in 0 until currentIndex) {
+        val otherSchedule = schedules[i]
+        val otherStart = Instant.ofEpochMilli(otherSchedule.startTime).atZone(ZoneId.systemDefault())
+        val otherEnd = Instant.ofEpochMilli(otherSchedule.endTime).atZone(ZoneId.systemDefault())
+
+        if (currentStart.isBefore(otherEnd) && currentEnd.isAfter(otherStart)) {
+            overlapCount++
+            maxOverlaps = maxOf(maxOf(overlapCount, maxOverlaps), 1)
+        } else {
+            overlapCount = 1
+        }
+    }
+
+    return maxOverlaps.coerceAtMost(3)
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+private fun calculateStartColumn(schedules: List<Schedule>, currentIndex: Int): Int {
+    val currentSchedule = schedules[currentIndex]
+    val currentStart = Instant.ofEpochMilli(currentSchedule.startTime).atZone(ZoneId.systemDefault())
+    val currentEnd = Instant.ofEpochMilli(currentSchedule.endTime).atZone(ZoneId.systemDefault())
+
+    var column = 0
+    val usedColumns = mutableSetOf<Int>()
+
+    for (i in 0 until currentIndex) {
+        val otherSchedule = schedules[i]
+        val otherStart = Instant.ofEpochMilli(otherSchedule.startTime).atZone(ZoneId.systemDefault())
+        val otherEnd = Instant.ofEpochMilli(otherSchedule.endTime).atZone(ZoneId.systemDefault())
+
+        if (currentStart.isBefore(otherEnd) && currentEnd.isAfter(otherStart)) {
+            val endMinutes = otherEnd.toLocalTime().hour * 60 + otherEnd.toLocalTime().minute
+            val startMinutes = currentStart.toLocalTime().hour * 60 + currentStart.toLocalTime().minute
+
+            if (endMinutes <= startMinutes) {
+                usedColumns.remove(0)
+            } else {
+                val overlapColumn = (i % 3)
+                usedColumns.add(overlapColumn)
+            }
+        }
+    }
+
+    while (usedColumns.contains(column)) {
+        column++
+    }
+
+    return column % 3
 }

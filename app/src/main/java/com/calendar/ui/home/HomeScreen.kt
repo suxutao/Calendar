@@ -19,26 +19,29 @@ import androidx.compose.ui.unit.dp
 import com.calendar.constants.ViewMode
 import com.calendar.ui.calendar.DayView
 import com.calendar.ui.calendar.MonthView
+import com.calendar.ui.calendar.ScheduleView
 import com.calendar.ui.calendar.WeekView
 import com.calendar.ui.components.CalendarActionBar
 import com.calendar.ui.components.CalendarTopBar
 import com.calendar.ui.components.DatePickerDialog
 import com.calendar.ui.components.showToast
 import com.calendar.ui.schedules.AddScheduleScreen
-import com.calendar.ui.schedules.ScheduleListScreen
+import com.calendar.ui.schedules.EditScheduleScreen
+import com.calendar.model.Schedule
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.calendar.viewmodel.ScheduleViewModel
 import java.time.LocalDate
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun HomeScreen() {
+fun HomeScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     var currentViewMode by remember { mutableStateOf(ViewMode.MONTH) }
     var showDatePicker by remember { mutableStateOf(false) }
     var showAddScheduleScreen by remember { mutableStateOf(false) }
-    var showScheduleListScreen by remember { mutableStateOf(false) }
     var targetDate by remember { mutableStateOf(LocalDate.now()) }
+    var editingSchedule by remember { mutableStateOf<Schedule?>(null) }
+    var showEditScreen by remember { mutableStateOf(false) }
 
     val scheduleViewModel: ScheduleViewModel = viewModel()
 
@@ -46,12 +49,12 @@ fun HomeScreen() {
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         Column(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
             CalendarTopBar(
-                onScheduleClick = { showScheduleListScreen = true },
+                onScheduleClick = { currentViewMode = ViewMode.SCHEDULE },
                 onDateJumpClick = { showDatePicker = true },
                 onImportExportClick = { showToast(context, "日程导入导出（待实现）") },
                 onSettingsClick = { showToast(context, "设置页面（待实现）") }
@@ -60,7 +63,7 @@ fun HomeScreen() {
             CalendarActionBar(
                 currentMode = currentViewMode,
                 onModeChanged = { currentViewMode = it },
-                onScheduleClick = { showScheduleListScreen = true },
+                onScheduleClick = { currentViewMode = ViewMode.SCHEDULE },
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
 
@@ -85,9 +88,24 @@ fun HomeScreen() {
                         onAddScheduleClick = { selectedDate ->
                             targetDate = selectedDate
                             showAddScheduleScreen = true
+                        },
+                        onScheduleClick = { schedule ->
+                            editingSchedule = schedule
+                            showEditScreen = true
                         }
                     )
                     ViewMode.DAY -> DayView(
+                        selectedDate = targetDate,
+                        onAddScheduleClick = { selectedDate ->
+                            targetDate = selectedDate
+                            showAddScheduleScreen = true
+                        },
+                        onScheduleClick = { schedule ->
+                            editingSchedule = schedule
+                            showEditScreen = true
+                        }
+                    )
+                    ViewMode.SCHEDULE -> ScheduleView(
                         selectedDate = targetDate,
                         onAddScheduleClick = { selectedDate ->
                             targetDate = selectedDate
@@ -118,13 +136,14 @@ fun HomeScreen() {
         )
     }
 
-    if (showScheduleListScreen) {
-        ScheduleListScreen(
-            viewModel = scheduleViewModel,
-            onNavigateBack = { showScheduleListScreen = false },
-            onEditSchedule = { schedule ->
-                showScheduleListScreen = false
-            }
+    if (showEditScreen && editingSchedule != null) {
+        EditScheduleScreen(
+            schedule = editingSchedule!!,
+            onNavigateBack = {
+                showEditScreen = false
+                editingSchedule = null
+            },
+            viewModel = scheduleViewModel
         )
     }
 }
