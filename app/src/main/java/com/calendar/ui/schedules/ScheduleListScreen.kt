@@ -15,10 +15,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -55,8 +55,7 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun ScheduleListScreen(
     viewModel: ScheduleViewModel,
-    onNavigateBack: () -> Unit,
-    onEditSchedule: (Schedule) -> Unit
+    onNavigateBack: () -> Unit
 ) {
     val allSchedules by viewModel.allSchedules.collectAsState(initial = emptyList())
     var showEditScreen by remember { mutableStateOf(false) }
@@ -95,7 +94,7 @@ fun ScheduleListScreen(
                     navigationIcon = {
                         IconButton(onClick = onNavigateBack) {
                             Icon(
-                                Icons.Default.ArrowBack,
+                                Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = "返回",
                                 tint = MaterialTheme.colorScheme.primary
                             )
@@ -215,6 +214,7 @@ fun ScheduleListScreen(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ScheduleListItem(
     schedule: Schedule,

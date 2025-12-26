@@ -105,12 +105,8 @@ object AlarmUtil {
             com.calendar.model.ReminderType.NONE -> 0
             com.calendar.model.ReminderType.FIVE_MINUTES -> 5
             com.calendar.model.ReminderType.TEN_MINUTES -> 10
-            com.calendar.model.ReminderType.FIFTEEN_MINUTES -> 15
             com.calendar.model.ReminderType.THIRTY_MINUTES -> 30
             com.calendar.model.ReminderType.ONE_HOUR -> 60
-            com.calendar.model.ReminderType.TWO_HOURS -> 120
-            com.calendar.model.ReminderType.THREE_HOURS -> 180
-            com.calendar.model.ReminderType.ONE_DAY -> 1440
         }
         
         return startTime.minusMinutes(reminderMinutes.toLong())

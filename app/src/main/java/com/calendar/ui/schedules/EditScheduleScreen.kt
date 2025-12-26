@@ -51,7 +51,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import com.calendar.model.ReminderType
 import com.calendar.model.Schedule
+import com.calendar.ui.components.ReminderSelector
 import com.calendar.ui.components.showToast
 import com.calendar.viewmodel.ScheduleViewModel
 import java.time.Instant
@@ -276,6 +278,33 @@ fun EditScheduleScreen(
                             }
                         )
                     }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "提醒设置",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Medium
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    ReminderSelector(
+                        selectedReminder = reminderType,
+                        onReminderSelected = { reminderType = it }
+                    )
                 }
             }
 

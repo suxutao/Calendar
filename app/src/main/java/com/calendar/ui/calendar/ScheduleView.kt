@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -41,10 +40,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.calendar.model.Schedule
-import com.calendar.ui.calendar.ScheduleCard
 import com.calendar.ui.schedules.EditScheduleScreen
 import com.calendar.viewmodel.ScheduleViewModel
 import java.time.Instant
@@ -62,7 +59,6 @@ private fun formatTime(epochMillis: Long): String {
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ScheduleView(
-    selectedDate: LocalDate = LocalDate.now(),
     onAddScheduleClick: (LocalDate) -> Unit = {}
 ) {
     val scheduleViewModel: ScheduleViewModel = viewModel()
@@ -70,13 +66,14 @@ fun ScheduleView(
     var showEditScreen by remember { mutableStateOf(false) }
     var editingSchedule by remember { mutableStateOf<Schedule?>(null) }
 
-    val dateSchedules = remember(allSchedules, selectedDate) {
-        allSchedules.filter { schedule ->
-            val scheduleDate = Instant.ofEpochMilli(schedule.startTime)
-                .atZone(ZoneId.systemDefault())
-                .toLocalDate()
-            scheduleDate == selectedDate
-        }.sortedBy { it.startTime }
+    val groupedSchedules = remember(allSchedules) {
+        allSchedules
+            .groupBy { schedule ->
+                Instant.ofEpochMilli(schedule.startTime)
+                    .atZone(ZoneId.systemDefault())
+                    .toLocalDate()
+            }
+            .toSortedMap(compareByDescending { it })
     }
 
     Column(
@@ -99,16 +96,15 @@ fun ScheduleView(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = selectedDate.format(DateTimeFormatter.ofPattern("yyyy年M月d日")),
+                    text = "所有日程",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.weight(1f))
-                val weekDay = selectedDate.dayOfWeek.name
                 Text(
-                    text = " $weekDay",
-                    style = MaterialTheme.typography.titleMedium,
+                    text = "${allSchedules.size}个日程",
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
             }
@@ -123,13 +119,13 @@ fun ScheduleView(
             tonalElevation = 1.dp
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
-                if (dateSchedules.isEmpty()) {
+                if (allSchedules.isEmpty()) {
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "当天没有日程",
+                            text = "暂无日程",
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -141,23 +137,52 @@ fun ScheduleView(
                             .padding(horizontal = 12.dp),
                         verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
                     ) {
-                        items(dateSchedules, key = { it.id }) { schedule ->
-                            ScheduleCard(
-                                schedule = schedule,
-                                onEditClick = {
-                                    editingSchedule = schedule
-                                    showEditScreen = true
-                                },
-                                onDeleteClick = {
-                                    scheduleViewModel.deleteSchedule(schedule)
+                        groupedSchedules.forEach { (date, schedules) ->
+                            val sortedSchedules = schedules.sortedBy { it.startTime }
+                            val displayDate = if (date == LocalDate.now()) "今天" else date.format(DateTimeFormatter.ofPattern("M月d日"))
+
+                            item(key = "header_$date") {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 4.dp, vertical = 12.dp)
+                                ) {
+                                    Text(
+                                        text = displayDate,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                    Text(
+                                        text = "${schedules.size}个日程",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                    )
                                 }
-                            )
+                            }
+
+                            items(sortedSchedules, key = { it.id }) { schedule ->
+                                ScheduleCard(
+                                    schedule = schedule,
+                                    onEditClick = {
+                                        editingSchedule = schedule
+                                        showEditScreen = true
+                                    },
+                                    onDeleteClick = {
+                                        scheduleViewModel.deleteSchedule(schedule)
+                                    }
+                                )
+                            }
+
+                            item(key = "spacer_$date") {
+                                Spacer(modifier = Modifier.height(8.dp))
+                            }
                         }
                     }
                 }
 
                 FloatingActionButton(
-                    onClick = { onAddScheduleClick(selectedDate) },
+                    onClick = { onAddScheduleClick(LocalDate.now()) },
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .padding(16.dp),
@@ -201,12 +226,8 @@ fun ScheduleCard(
         com.calendar.model.ReminderType.NONE -> Color(0xFF4CAF50)
         com.calendar.model.ReminderType.FIVE_MINUTES -> Color(0xFF03A9F4)
         com.calendar.model.ReminderType.TEN_MINUTES -> Color(0xFF2196F3)
-        com.calendar.model.ReminderType.FIFTEEN_MINUTES -> Color(0xFF00BCD4)
         com.calendar.model.ReminderType.THIRTY_MINUTES -> Color(0xFFFF9800)
         com.calendar.model.ReminderType.ONE_HOUR -> Color(0xFF9C27B0)
-        com.calendar.model.ReminderType.TWO_HOURS -> Color(0xFFE91E63)
-        com.calendar.model.ReminderType.THREE_HOURS -> Color(0xFF795548)
-        com.calendar.model.ReminderType.ONE_DAY -> Color(0xFFFF5722)
     }
 
     Card(
@@ -252,7 +273,7 @@ fun ScheduleCard(
                 if (description.isNotBlank()) {
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = description ?: "",
+                        text = description,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
                         maxLines = 2

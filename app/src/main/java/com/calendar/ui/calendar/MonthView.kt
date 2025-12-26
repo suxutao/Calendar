@@ -4,19 +4,40 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Place
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,17 +45,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.calendar.model.Schedule
 import com.calendar.ui.components.CalendarDay
-import com.calendar.ui.components.DateCell
 import com.calendar.ui.components.WeekdaysHeader
-import com.calendar.viewmodel.ScheduleViewModel
+import com.calendar.ui.settings.PreferencesManager
 import com.calendar.util.LunarCalendarUtil
+import com.calendar.viewmodel.ScheduleViewModel
 import java.time.LocalDate
-import java.time.format.TextStyle
-import java.util.Locale
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -50,6 +68,9 @@ fun MonthView(
     var currentMonth by remember { mutableStateOf(initialSelectedDate ?: selectedDate) }
     val scheduleViewModel: ScheduleViewModel = viewModel()
     val allSchedules by scheduleViewModel.allSchedules.collectAsState(initial = emptyList())
+
+    val prefs = remember { PreferencesManager(context) }
+    val showLunarCalendar by remember { mutableStateOf(prefs.showLunarCalendar) }
 
     val targetDate = initialSelectedDate ?: selectedDate
     
@@ -92,6 +113,7 @@ fun MonthView(
                     currentDate = currentDate,
                     today = today,
                     monthSchedules = monthSchedules,
+                    showLunarCalendar = showLunarCalendar,
                     onDateClick = { date ->
                         currentDate = date
                         onDateSelected(date)
@@ -206,6 +228,7 @@ fun MonthGrid(
     currentDate: LocalDate,
     today: LocalDate,
     monthSchedules: Map<LocalDate, List<Schedule>>,
+    showLunarCalendar: Boolean,
     onDateClick: (LocalDate) -> Unit
 ) {
     val firstDayOfMonth = currentMonth.withDayOfMonth(1)
@@ -257,6 +280,7 @@ fun MonthGrid(
                             calendarDay = calendarDay,
                             isSelected = calendarDay.date == currentDate,
                             scheduleCount = scheduleCount,
+                            showLunarCalendar = showLunarCalendar,
                             onDateClick = onDateClick,
                             modifier = Modifier.weight(1f)
                         )
@@ -273,6 +297,7 @@ fun DateCellImproved(
     calendarDay: CalendarDay,
     isSelected: Boolean,
     scheduleCount: Int,
+    showLunarCalendar: Boolean,
     onDateClick: (LocalDate) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -318,7 +343,7 @@ fun DateCellImproved(
                 color = selectedTextColor
             )
             
-            if (lunarDate.isNotEmpty()) {
+            if (showLunarCalendar && lunarDate.isNotEmpty()) {
                 Text(
                     text = lunarDate,
                     style = MaterialTheme.typography.labelSmall,

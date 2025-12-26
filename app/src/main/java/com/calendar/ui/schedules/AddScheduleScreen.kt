@@ -44,6 +44,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -55,6 +56,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.calendar.model.ReminderType
 import com.calendar.model.Schedule
+import com.calendar.ui.components.ReminderSelector
 import com.calendar.ui.components.showToast
 import com.calendar.viewmodel.ScheduleViewModel
 import java.time.LocalDate
@@ -76,10 +78,10 @@ fun AddScheduleScreen(
 
     var title by remember { mutableStateOf(TextFieldValue("")) }
     var description by remember { mutableStateOf(TextFieldValue("")) }
-    var startHour by remember { mutableStateOf(9) }
-    var startMinute by remember { mutableStateOf(0) }
-    var endHour by remember { mutableStateOf(10) }
-    var endMinute by remember { mutableStateOf(0) }
+    var startHour by remember { mutableIntStateOf(9) }
+    var startMinute by remember { mutableIntStateOf(0) }
+    var endHour by remember { mutableIntStateOf(10) }
+    var endMinute by remember { mutableIntStateOf(0) }
     var isAllDay by remember { mutableStateOf(false) }
     var reminderType by remember { mutableStateOf(ReminderType.NONE) }
 
@@ -252,6 +254,32 @@ fun AddScheduleScreen(
                 }
             }
 
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "提醒设置",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    ReminderSelector(
+                        selectedReminder = reminderType,
+                        onReminderSelected = { reminderType = it }
+                    )
+                }
+            }
+
             Spacer(modifier = Modifier.height(24.dp))
 
             Button(
@@ -291,7 +319,7 @@ fun AddScheduleScreen(
                         viewModel.addSchedule(schedule)
                         showToast(context, "日程添加成功")
                         onNavigateBack()
-                    } catch (e: Exception) {
+                    } catch (_: Exception) {
                         showToast(context, "时间设置错误，请检查")
                     }
                 },
@@ -367,43 +395,7 @@ private fun FormTextField(
     )
 }
 
-@Composable
-private fun TimeDisplayRow(
-    icon: ImageVector,
-    label: String,
-    time: String
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(20.dp)
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        Spacer(modifier = Modifier.weight(1f))
-        Surface(
-            shape = RoundedCornerShape(8.dp),
-            color = MaterialTheme.colorScheme.primaryContainer
-        ) {
-            Text(
-                text = time,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-            )
-        }
-    }
-}
-
+@SuppressLint("DefaultLocale")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TimePickerRow(

@@ -29,6 +29,7 @@ import com.calendar.ui.schedules.AddScheduleScreen
 import com.calendar.ui.schedules.EditScheduleScreen
 import com.calendar.model.Schedule
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.calendar.ui.settings.SettingsScreen
 import com.calendar.viewmodel.ScheduleViewModel
 import java.time.LocalDate
 
@@ -42,6 +43,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     var targetDate by remember { mutableStateOf(LocalDate.now()) }
     var editingSchedule by remember { mutableStateOf<Schedule?>(null) }
     var showEditScreen by remember { mutableStateOf(false) }
+    var showSettingsScreen by remember { mutableStateOf(false) }
 
     val scheduleViewModel: ScheduleViewModel = viewModel()
 
@@ -57,7 +59,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                 onScheduleClick = { currentViewMode = ViewMode.SCHEDULE },
                 onDateJumpClick = { showDatePicker = true },
                 onImportExportClick = { showToast(context, "日程导入导出（待实现）") },
-                onSettingsClick = { showToast(context, "设置页面（待实现）") }
+                onSettingsClick = { showSettingsScreen = true }
             )
 
             CalendarActionBar(
@@ -106,7 +108,6 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                         }
                     )
                     ViewMode.SCHEDULE -> ScheduleView(
-                        selectedDate = targetDate,
                         onAddScheduleClick = { selectedDate ->
                             targetDate = selectedDate
                             showAddScheduleScreen = true
@@ -144,6 +145,12 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                 editingSchedule = null
             },
             viewModel = scheduleViewModel
+        )
+    }
+
+    if (showSettingsScreen) {
+        SettingsScreen(
+            onNavigateBack = { showSettingsScreen = false }
         )
     }
 }

@@ -18,9 +18,6 @@ class ScheduleRepository(private val dao: ScheduleDao) {
     // 删除日程
     suspend fun remove(schedule: Schedule) = dao.delete(schedule)
 
-    // 根据ID查询日程
-    suspend fun getSchedule(id: Long): Schedule? = dao.getById(id)
-
     // 查询某天的日程（传入当天0点和次日0点的时间戳）
     suspend fun getDaySchedules(dayStart: Long, dayEnd: Long): List<Schedule> {
         return dao.getInRange(dayStart, dayEnd)

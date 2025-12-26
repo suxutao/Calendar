@@ -2,7 +2,6 @@ package com.calendar.ui.calendar
 
 import android.os.Build
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -40,13 +39,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.calendar.model.Schedule
 import com.calendar.ui.components.CalendarDay
@@ -381,7 +378,7 @@ fun ScheduleBriefCard(
     val startDateTime = Instant.ofEpochMilli(schedule.startTime)
         .atZone(ZoneId.systemDefault())
         .toLocalDateTime()
-    val endDateTime = Instant.ofEpochMilli(schedule.endTime)
+    Instant.ofEpochMilli(schedule.endTime)
         .atZone(ZoneId.systemDefault())
         .toLocalDateTime()
 
