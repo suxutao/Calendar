@@ -2,8 +2,11 @@ package com.calendar.ui.calendar
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,10 +19,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ChevronLeft
@@ -35,14 +36,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -52,6 +58,7 @@ import com.calendar.ui.components.WeekdaysHeader
 import com.calendar.ui.settings.PreferencesManager
 import com.calendar.util.LunarCalendarUtil
 import com.calendar.viewmodel.ScheduleViewModel
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -64,8 +71,9 @@ fun MonthView(
 ) {
     val context = LocalContext.current
     val today = LocalDate.now()
-    var currentDate by remember { mutableStateOf(initialSelectedDate ?: selectedDate) }
     var currentMonth by remember { mutableStateOf(initialSelectedDate ?: selectedDate) }
+    var previousMonth by remember { mutableStateOf(currentMonth.minusMonths(1)) }
+    var nextMonth by remember { mutableStateOf(currentMonth.plusMonths(1)) }
     val scheduleViewModel: ScheduleViewModel = viewModel()
     val allSchedules by scheduleViewModel.allSchedules.collectAsState(initial = emptyList())
 
@@ -73,13 +81,14 @@ fun MonthView(
     val showLunarCalendar by remember { mutableStateOf(prefs.showLunarCalendar) }
 
     val targetDate = initialSelectedDate ?: selectedDate
-    
+
     LaunchedEffect(targetDate) {
         currentMonth = targetDate
-        currentDate = targetDate
+        previousMonth = targetDate.minusMonths(1)
+        nextMonth = targetDate.plusMonths(1)
     }
 
-    val monthSchedules = allSchedules.filter { schedule ->
+    val currentSchedules = allSchedules.filter { schedule ->
         val scheduleDate = java.time.Instant.ofEpochMilli(schedule.startTime)
             .atZone(java.time.ZoneId.systemDefault())
             .toLocalDate()
@@ -90,78 +99,187 @@ fun MonthView(
             .toLocalDate()
     }
 
+    val previousSchedules = allSchedules.filter { schedule ->
+        val scheduleDate = java.time.Instant.ofEpochMilli(schedule.startTime)
+            .atZone(java.time.ZoneId.systemDefault())
+            .toLocalDate()
+        scheduleDate.month == previousMonth.month && scheduleDate.year == previousMonth.year
+    }.groupBy { schedule ->
+        java.time.Instant.ofEpochMilli(schedule.startTime)
+            .atZone(java.time.ZoneId.systemDefault())
+            .toLocalDate()
+    }
+
+    val nextSchedules = allSchedules.filter { schedule ->
+        val scheduleDate = java.time.Instant.ofEpochMilli(schedule.startTime)
+            .atZone(java.time.ZoneId.systemDefault())
+            .toLocalDate()
+        scheduleDate.month == nextMonth.month && scheduleDate.year == nextMonth.year
+    }.groupBy { schedule ->
+        java.time.Instant.ofEpochMilli(schedule.startTime)
+            .atZone(java.time.ZoneId.systemDefault())
+            .toLocalDate()
+    }
+
+    val density = LocalDensity.current
+    val swipeThreshold = with(density) { 100.dp.toPx() }
+    var offsetY by remember { mutableFloatStateOf(0f) }
+    val currentAlpha = remember { Animatable(1f) }
+    var isAnimating by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .pointerInput(Unit) {
+                detectVerticalDragGestures(
+                    onDragEnd = {
+                        if (!isAnimating) {
+                            isAnimating = true
+                            if (offsetY > swipeThreshold) {
+                                scope.launch {
+                                    currentAlpha.animateTo(0f, tween(150))
+                                    nextMonth = currentMonth
+                                    currentMonth = previousMonth
+                                    previousMonth = currentMonth.minusMonths(1)
+                                    currentAlpha.snapTo(0f)
+                                    currentAlpha.animateTo(1f, tween(150))
+                                    onDateSelected(currentMonth)
+                                    isAnimating = false
+                                }
+                            } else if (offsetY < -swipeThreshold) {
+                                scope.launch {
+                                    currentAlpha.animateTo(0f, tween(150))
+                                    previousMonth = currentMonth
+                                    currentMonth = nextMonth
+                                    nextMonth = currentMonth.plusMonths(1)
+                                    currentAlpha.snapTo(0f)
+                                    currentAlpha.animateTo(1f, tween(150))
+                                    onDateSelected(currentMonth)
+                                    isAnimating = false
+                                }
+                            } else {
+                                isAnimating = false
+                            }
+                        }
+                        offsetY = 0f
+                    },
+                    onDragCancel = {
+                        offsetY = 0f
+                        isAnimating = false
+                    },
+                    onVerticalDrag = { change, dragAmount ->
+                        change.consume()
+                        offsetY = offsetY + dragAmount
+                    }
+                )
+            }
+    ) {
+        MonthHeader(
+            currentMonth = currentMonth,
+            onPreviousMonth = {
+                currentMonth = currentMonth.minusMonths(1)
+                onDateSelected(currentMonth)
+            },
+            onNextMonth = {
+                currentMonth = currentMonth.plusMonths(1)
+                onDateSelected(currentMonth)
+            }
+        )
+
+        Spacer(modifier = Modifier.height(50.dp))
+
+        WeekdaysHeader()
+
+        MonthGrid(
+            currentMonth = currentMonth,
+            currentDate = currentMonth,
+            today = today,
+            monthSchedules = currentSchedules,
+            showLunarCalendar = showLunarCalendar,
+            onDateClick = { date ->
+                onDateSelected(date)
+            },
+            modifier = Modifier.alpha(currentAlpha.value)
+        )
+
+        Spacer(modifier = Modifier.height(80.dp))
+    }
+
+    Box(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Row(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            FloatingActionButton(
+                onClick = {
+                    currentMonth = today
+                    onDateSelected(today)
+                },
+                modifier = Modifier.size(60.dp),
+                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Place,
+                    contentDescription = "切换到今天"
+                )
+            }
+
+            FloatingActionButton(
+                onClick = { onAddScheduleClick(currentMonth) },
+                modifier = Modifier.size(60.dp),
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "添加日程"
+                )
+            }
+        }
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+private fun MonthContent(
+    currentMonth: LocalDate,
+    currentDate: LocalDate,
+    today: LocalDate,
+    monthSchedules: Map<LocalDate, List<Schedule>>,
+    showLunarCalendar: Boolean,
+    onDateClick: (LocalDate) -> Unit
+) {
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
     ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-            ) {
-                MonthHeader(
-                    currentMonth = currentMonth,
-                    onPreviousMonth = { currentMonth = currentMonth.minusMonths(1) },
-                    onNextMonth = { currentMonth = currentMonth.plusMonths(1) }
-                )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+        ) {
+            Spacer(modifier = Modifier.height(80.dp))
 
-                Spacer(modifier = Modifier.height(50.dp))
+            WeekdaysHeader()
 
-                WeekdaysHeader()
+            MonthGrid(
+                currentMonth = currentMonth,
+                currentDate = currentDate,
+                today = today,
+                monthSchedules = monthSchedules,
+                showLunarCalendar = showLunarCalendar,
+                onDateClick = onDateClick
+            )
 
-                MonthGrid(
-                    currentMonth = currentMonth,
-                    currentDate = currentDate,
-                    today = today,
-                    monthSchedules = monthSchedules,
-                    showLunarCalendar = showLunarCalendar,
-                    onDateClick = { date ->
-                        currentDate = date
-                        onDateSelected(date)
-                    }
-                )
-
-                Spacer(modifier = Modifier.height(80.dp))
-            }
-
-            Row(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                FloatingActionButton(
-                    onClick = {
-                        currentDate = today
-                        currentMonth = today
-                        onDateSelected(today)
-                    },
-                    modifier = Modifier.size(48.dp),
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Place,
-                        contentDescription = "切换到今天"
-                    )
-                }
-
-                FloatingActionButton(
-                    onClick = { onAddScheduleClick(currentDate) },
-                    modifier = Modifier.size(48.dp),
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "添加日程"
-                    )
-                }
-            }
+            Spacer(modifier = Modifier.height(80.dp))
         }
     }
 }
@@ -194,7 +312,7 @@ fun MonthHeader(
                     contentDescription = "上一月"
                 )
             }
-            
+
             Surface(
                 shape = RoundedCornerShape(8.dp),
                 color = MaterialTheme.colorScheme.primaryContainer
@@ -207,7 +325,7 @@ fun MonthHeader(
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                 )
             }
-            
+
             FilledTonalIconButton(
                 onClick = onNextMonth,
                 modifier = Modifier.size(40.dp)
@@ -231,33 +349,34 @@ fun MonthGrid(
     today: LocalDate,
     monthSchedules: Map<LocalDate, List<Schedule>>,
     showLunarCalendar: Boolean,
-    onDateClick: (LocalDate) -> Unit
+    onDateClick: (LocalDate) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val firstDayOfMonth = currentMonth.withDayOfMonth(1)
     val firstDayOfWeek = firstDayOfMonth.dayOfWeek.value % 7
     val daysInMonth = currentMonth.lengthOfMonth()
     val daysInPreviousMonth = currentMonth.minusMonths(1).lengthOfMonth()
-    
+
     val calendarDays = mutableListOf<CalendarDay>()
-    
+
     for (i in firstDayOfWeek downTo 1) {
         val day = currentMonth.minusMonths(1).withDayOfMonth(daysInPreviousMonth - i + 1)
         calendarDays.add(CalendarDay(day, isCurrentMonth = false, isToday = day == today))
     }
-    
+
     for (i in 1..daysInMonth) {
         val day = currentMonth.withDayOfMonth(i)
         calendarDays.add(CalendarDay(day, isCurrentMonth = true, isToday = day == today))
     }
-    
+
     val remainingDays = 42 - calendarDays.size
     for (i in 1..remainingDays) {
         val day = currentMonth.plusMonths(1).withDayOfMonth(i)
         calendarDays.add(CalendarDay(day, isCurrentMonth = false, isToday = day == today))
     }
-    
+
     Surface(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 8.dp, vertical = 4.dp),
         shape = RoundedCornerShape(16.dp),
@@ -277,7 +396,7 @@ fun MonthGrid(
                         val index = row * 7 + col
                         val calendarDay = calendarDays[index]
                         val scheduleCount = monthSchedules[calendarDay.date]?.size ?: 0
-                        
+
                         DateCellImproved(
                             calendarDay = calendarDay,
                             isSelected = calendarDay.date == currentDate,
@@ -305,25 +424,25 @@ fun DateCellImproved(
 ) {
     val date = calendarDay.date
     val lunarDate = LunarCalendarUtil.formatLunarDate(date)
-    
+
     val textColor = when {
         !calendarDay.isCurrentMonth -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
         calendarDay.isToday -> MaterialTheme.colorScheme.primary
         else -> MaterialTheme.colorScheme.onSurface
     }
-    
+
     val backgroundColor = when {
         isSelected -> MaterialTheme.colorScheme.primary
         calendarDay.isToday -> MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
         else -> Color.Transparent
     }
-    
+
     val selectedTextColor = if (isSelected) {
         MaterialTheme.colorScheme.onPrimary
     } else {
         textColor
     }
-    
+
     Box(
         modifier = modifier
             .aspectRatio(1f)
@@ -344,7 +463,7 @@ fun DateCellImproved(
                 fontWeight = if (calendarDay.isToday || isSelected) FontWeight.Bold else FontWeight.Normal,
                 color = selectedTextColor
             )
-            
+
             if (showLunarCalendar && lunarDate.isNotEmpty()) {
                 Text(
                     text = lunarDate,
@@ -352,7 +471,7 @@ fun DateCellImproved(
                     color = if (isSelected) selectedTextColor.copy(alpha = 0.8f) else textColor.copy(alpha = 0.7f)
                 )
             }
-            
+
             if (scheduleCount > 0) {
                 Spacer(modifier = Modifier.height(2.dp))
                 Row(
@@ -365,7 +484,7 @@ fun DateCellImproved(
                                 .size(4.dp)
                                 .clip(CircleShape)
                                 .background(
-                                    if (isSelected) MaterialTheme.colorScheme.onPrimary 
+                                    if (isSelected) MaterialTheme.colorScheme.onPrimary
                                     else MaterialTheme.colorScheme.primary
                                 )
                         )
