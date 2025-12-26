@@ -289,6 +289,17 @@ fun ScheduleCard(
     val cardOffset = (startColumn * columnWidth * 100).toInt() / 100f + 0.02f
     val cardWidth = columnWidth - 0.04f
 
+    val containerColor = if (schedule.isAllDay) {
+        MaterialTheme.colorScheme.secondaryContainer
+    } else {
+        MaterialTheme.colorScheme.secondaryContainer
+    }
+    val contentColor = if (schedule.isAllDay) {
+        MaterialTheme.colorScheme.onSecondaryContainer
+    } else {
+        MaterialTheme.colorScheme.onSecondaryContainer
+    }
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -307,7 +318,7 @@ fun ScheduleCard(
                     .fillMaxSize()
                     .clickable { onScheduleClick() },
                 shape = RoundedCornerShape(12.dp),
-                color = MaterialTheme.colorScheme.surface,
+                color = containerColor,
                 tonalElevation = 2.dp,
                 shadowElevation = 2.dp
             ) {
@@ -325,7 +336,7 @@ fun ScheduleCard(
                                 .width(4.dp)
                                 .height(20.dp),
                             shape = RoundedCornerShape(2.dp),
-                            color = MaterialTheme.colorScheme.primary
+                            color = contentColor
                         ) {}
 
                         Spacer(modifier = Modifier.width(12.dp))
@@ -335,7 +346,7 @@ fun ScheduleCard(
                                 text = schedule.title,
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onSurface,
+                                color = contentColor,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
@@ -344,7 +355,7 @@ fun ScheduleCard(
                                 Text(
                                     text = schedule.description,
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    color = contentColor.copy(alpha = 0.7f),
                                     maxLines = 2,
                                     overflow = TextOverflow.Ellipsis,
                                     modifier = Modifier.padding(top = 2.dp)
@@ -356,7 +367,7 @@ fun ScheduleCard(
                                     startTime.hour, startTime.minute,
                                     endTime.hour, endTime.minute),
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                color = contentColor.copy(alpha = 0.7f),
                                 modifier = Modifier.padding(top = 4.dp)
                             )
                         }

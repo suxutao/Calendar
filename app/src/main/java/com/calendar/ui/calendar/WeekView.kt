@@ -383,14 +383,14 @@ fun ScheduleBriefCard(
         .toLocalDateTime()
 
     val containerColor = if (schedule.isAllDay) {
-        MaterialTheme.colorScheme.tertiaryContainer
+        MaterialTheme.colorScheme.secondaryContainer
     } else {
-        MaterialTheme.colorScheme.primaryContainer
+        MaterialTheme.colorScheme.secondaryContainer
     }
     val contentColor = if (schedule.isAllDay) {
-        MaterialTheme.colorScheme.onTertiaryContainer
+        MaterialTheme.colorScheme.onSecondaryContainer
     } else {
-        MaterialTheme.colorScheme.onPrimaryContainer
+        MaterialTheme.colorScheme.onSecondaryContainer
     }
 
     Surface(

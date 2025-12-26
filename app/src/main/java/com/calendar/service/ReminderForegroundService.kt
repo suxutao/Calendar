@@ -21,6 +21,7 @@ import com.calendar.R
 import com.calendar.db.AppDatabase
 import com.calendar.model.ReminderType
 import com.calendar.model.Schedule
+import com.calendar.util.LunarCalendarUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -30,7 +31,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 class ReminderForegroundService : Service() {
 
@@ -270,14 +273,20 @@ class ReminderForegroundService : Service() {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
 
+            val today = LocalDate.now()
+            val weekFormatter = DateTimeFormatter.ofPattern("EEEE")
+            val lunarInfo = LunarCalendarUtil.formatLunarDate(today)
+            val dateInfo = "${today.monthValue}月${today.dayOfMonth}日 ${today.format(weekFormatter)} $lunarInfo"
+
             NotificationCompat.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.mipmap.ic_launcher)
                 .setContentTitle("我的日历")
-                .setContentText("正在运行 - 接收日程提醒")
-                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setContentText(dateInfo)
+                .setPriority(NotificationCompat.PRIORITY_MIN)
                 .setOngoing(true)
                 .setContentIntent(pendingIntent)
                 .setShowWhen(false)
+                .setSilent(true)
                 .build()
         } catch (e: Exception) {
             Log.e(TAG, "Error creating foreground notification", e)
