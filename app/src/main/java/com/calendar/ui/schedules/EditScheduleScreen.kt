@@ -118,7 +118,6 @@ fun EditScheduleScreen(
                         IconButton(
                             onClick = {
                                 viewModel.deleteSchedule(schedule)
-                                showToast(context, "日程已删除")
                                 onNavigateBack()
                             }
                         ) {
