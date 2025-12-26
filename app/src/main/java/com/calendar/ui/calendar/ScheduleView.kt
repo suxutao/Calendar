@@ -20,9 +20,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -218,16 +221,48 @@ fun ScheduleCard(
     onEditClick: () -> Unit,
     onDeleteClick: () -> Unit
 ) {
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
     val startTime = formatTime(schedule.startTime)
     val endTime = formatTime(schedule.endTime)
     val title = schedule.title
     val description = schedule.description ?: ""
     val color = when (schedule.reminderType) {
         com.calendar.model.ReminderType.NONE -> Color(0xFF4CAF50)
+        com.calendar.model.ReminderType.AT_START -> Color(0xFFE91E63)
         com.calendar.model.ReminderType.FIVE_MINUTES -> Color(0xFF03A9F4)
         com.calendar.model.ReminderType.TEN_MINUTES -> Color(0xFF2196F3)
         com.calendar.model.ReminderType.THIRTY_MINUTES -> Color(0xFFFF9800)
         com.calendar.model.ReminderType.ONE_HOUR -> Color(0xFF9C27B0)
+        com.calendar.model.ReminderType.ALL_DAY_PREV_NIGHT_8PM -> Color(0xFF795548)
+        com.calendar.model.ReminderType.ALL_DAY_PREV_NIGHT_9PM -> Color(0xFF5D4037)
+        com.calendar.model.ReminderType.ALL_DAY_PREV_NIGHT_10PM -> Color(0xFF4E342E)
+        com.calendar.model.ReminderType.ALL_DAY_MORNING_6AM -> Color(0xFFFFEB3B)
+        com.calendar.model.ReminderType.ALL_DAY_MORNING_7AM -> Color(0xFFFFC107)
+        com.calendar.model.ReminderType.ALL_DAY_MORNING_8AM -> Color(0xFFFF9800)
+    }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("确认删除") },
+            text = { Text("确定要删除日程「${schedule.title}」吗？此操作无法撤销。") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onDeleteClick()
+                        showDeleteDialog = false
+                    }
+                ) {
+                    Text("删除", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("取消")
+                }
+            }
+        )
     }
 
     Card(
@@ -281,27 +316,33 @@ fun ScheduleCard(
                 }
             }
 
-            Column {
+            Row(
+                modifier = Modifier
+                    .align(Alignment.Top)
+                    .padding(start = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 IconButton(
                     onClick = onEditClick,
-                    modifier = Modifier.size(32.dp)
+                    modifier = Modifier.size(44.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Edit,
                         contentDescription = "编辑",
                         tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(24.dp)
                     )
                 }
+                Spacer(modifier = Modifier.width(4.dp))
                 IconButton(
-                    onClick = onDeleteClick,
-                    modifier = Modifier.size(32.dp)
+                    onClick = { showDeleteDialog = true },
+                    modifier = Modifier.size(44.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Delete,
                         contentDescription = "删除",
                         tint = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(24.dp)
                     )
                 }
             }

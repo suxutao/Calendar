@@ -382,16 +382,23 @@ fun ScheduleBriefCard(
         .atZone(ZoneId.systemDefault())
         .toLocalDateTime()
 
+    val containerColor = if (schedule.isAllDay) {
+        MaterialTheme.colorScheme.tertiaryContainer
+    } else {
+        MaterialTheme.colorScheme.primaryContainer
+    }
+    val contentColor = if (schedule.isAllDay) {
+        MaterialTheme.colorScheme.onTertiaryContainer
+    } else {
+        MaterialTheme.colorScheme.onPrimaryContainer
+    }
+
     Surface(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() },
         shape = RoundedCornerShape(8.dp),
-        color = if (schedule.isAllDay) {
-            MaterialTheme.colorScheme.tertiaryContainer
-        } else {
-            MaterialTheme.colorScheme.secondaryContainer
-        }
+        color = containerColor
     ) {
         Row(
             modifier = Modifier.padding(10.dp),
@@ -402,7 +409,7 @@ fun ScheduleBriefCard(
                     text = startDateTime.format(timeFormatter),
                     style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    color = contentColor,
                     modifier = Modifier.width(48.dp)
                 )
                 Spacer(modifier = Modifier.width(4.dp))
@@ -413,7 +420,7 @@ fun ScheduleBriefCard(
                 style = MaterialTheme.typography.bodySmall,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                color = contentColor,
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier.weight(1f)
             )

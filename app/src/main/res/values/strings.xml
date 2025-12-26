@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">日历</string>
+    <string name="app_name">我的日历</string>
     <string name="schedule">日程</string>
     <string name="settings">设置</string>
     <string name="year_view">年</string>

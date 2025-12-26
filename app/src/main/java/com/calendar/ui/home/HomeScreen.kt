@@ -56,9 +56,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                 .padding(paddingValues)
         ) {
             CalendarTopBar(
-                onScheduleClick = { currentViewMode = ViewMode.SCHEDULE },
                 onDateJumpClick = { showDatePicker = true },
-                onImportExportClick = { showToast(context, "日程导入导出（待实现）") },
                 onSettingsClick = { showSettingsScreen = true }
             )
 

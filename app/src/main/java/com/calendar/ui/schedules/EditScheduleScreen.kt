@@ -302,7 +302,8 @@ fun EditScheduleScreen(
 
                     ReminderSelector(
                         selectedReminder = reminderType,
-                        onReminderSelected = { reminderType = it }
+                        onReminderSelected = { reminderType = it },
+                        isAllDay = isAllDay
                     )
                 }
             }

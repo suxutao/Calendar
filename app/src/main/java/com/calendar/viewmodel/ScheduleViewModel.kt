@@ -28,7 +28,6 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     val selectedDate: LiveData<LocalDate> = _selectedDate
     
     init {
-        ReminderForegroundService.start(getApplication())
     }
     
     fun setSelectedDate(date: LocalDate) {
@@ -38,14 +37,20 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     fun addSchedule(schedule: Schedule) {
         viewModelScope.launch(Dispatchers.IO) {
             repository.add(schedule)
-            ReminderForegroundService.start(getApplication())
+            try {
+                ReminderForegroundService.start(getApplication())
+            } catch (e: Exception) {
+            }
         }
     }
     
     fun updateSchedule(schedule: Schedule) {
         viewModelScope.launch(Dispatchers.IO) {
             repository.edit(schedule)
-            ReminderForegroundService.start(getApplication())
+            try {
+                ReminderForegroundService.start(getApplication())
+            } catch (e: Exception) {
+            }
         }
     }
     

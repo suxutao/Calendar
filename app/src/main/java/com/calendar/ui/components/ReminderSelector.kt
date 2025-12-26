@@ -30,9 +30,16 @@ import com.calendar.model.ReminderType
 fun ReminderSelector(
     selectedReminder: ReminderType,
     onReminderSelected: (ReminderType) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isAllDay: Boolean = false
 ) {
     var showDialog by remember { mutableStateOf(false) }
+    
+    val availableOptions = if (isAllDay) {
+        ReminderType.getAllDayOptions()
+    } else {
+        ReminderType.getRegularOptions()
+    }
 
     Row(
         modifier = modifier
@@ -78,7 +85,7 @@ fun ReminderSelector(
             },
             text = {
                 Column {
-                    ReminderType.entries.forEach { reminderType ->
+                    availableOptions.forEach { reminderType ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()

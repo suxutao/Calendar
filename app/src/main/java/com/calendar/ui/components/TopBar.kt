@@ -1,7 +1,10 @@
 package com.calendar.ui.components
 
 import android.content.Context
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import android.widget.Toast
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.MoreVert
@@ -33,9 +36,7 @@ import com.calendar.R
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CalendarTopBar(
-    onScheduleClick: () -> Unit,
     onDateJumpClick: () -> Unit,
-    onImportExportClick: () -> Unit,
     onSettingsClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -50,22 +51,24 @@ fun CalendarTopBar(
     ) {
         TopAppBar(
             title = {
-                Text(
-                    text = stringResource(id = R.string.app_name),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            },
-            actions = {
-                IconButton(onClick = onScheduleClick) {
+                Row(
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                ) {
                     Icon(
                         imageVector = Icons.Default.DateRange,
                         contentDescription = stringResource(id = R.string.schedule),
                         tint = MaterialTheme.colorScheme.primary
                     )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = stringResource(id = R.string.app_name),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 }
-
+            },
+            actions = {
                 IconButton(
                     onClick = { isMenuExpanded = true },
                     modifier = Modifier.onGloballyPositioned {
@@ -96,19 +99,6 @@ fun CalendarTopBar(
                         },
                         onClick = {
                             onDateJumpClick()
-                            isMenuExpanded = false
-                        }
-                    )
-
-                    DropdownMenuItem(
-                        text = {
-                            Text(
-                                text = stringResource(id = R.string.import_export),
-                                style = MaterialTheme.typography.bodyLarge
-                            )
-                        },
-                        onClick = {
-                            onImportExportClick()
                             isMenuExpanded = false
                         }
                     )
