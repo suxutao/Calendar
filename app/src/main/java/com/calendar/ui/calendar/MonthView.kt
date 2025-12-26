@@ -106,6 +106,8 @@ fun MonthView(
                     onNextMonth = { currentMonth = currentMonth.plusMonths(1) }
                 )
 
+                Spacer(modifier = Modifier.height(50.dp))
+
                 WeekdaysHeader()
 
                 MonthGrid(

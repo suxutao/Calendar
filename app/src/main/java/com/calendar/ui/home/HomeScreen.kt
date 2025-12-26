@@ -1,5 +1,6 @@
 package com.calendar.ui.home
 
+import android.annotation.SuppressLint
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Box
@@ -34,6 +35,7 @@ import com.calendar.viewmodel.ScheduleViewModel
 import java.time.LocalDate
 
 @RequiresApi(Build.VERSION_CODES.O)
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun HomeScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
@@ -49,11 +51,10 @@ fun HomeScreen(modifier: Modifier = Modifier) {
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
-    ) { paddingValues ->
+    ) { _ ->
         Column(
             modifier = modifier
                 .fillMaxSize()
-                .padding(paddingValues)
         ) {
             CalendarTopBar(
                 onDateJumpClick = { showDatePicker = true },
