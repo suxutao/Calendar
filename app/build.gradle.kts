@@ -71,6 +71,7 @@ dependencies {
 
     // DateTime
     implementation(libs.jetbrains.kotlinx.datetime)
+    implementation(libs.lunar)
 
     // Debug
     debugImplementation(libs.androidx.compose.ui.tooling)
