@@ -466,7 +466,7 @@ fun DateCellImproved(
 
             if (showLunarCalendar && lunarDate.isNotEmpty()) {
                 Text(
-                    text = lunarDate,
+                    text = lunarDate.takeLast(2),
                     style = MaterialTheme.typography.labelSmall,
                     color = if (isSelected) selectedTextColor.copy(alpha = 0.8f) else textColor.copy(alpha = 0.7f)
                 )
