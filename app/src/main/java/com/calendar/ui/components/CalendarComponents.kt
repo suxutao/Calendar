@@ -31,6 +31,7 @@ data class CalendarDay(
     val isToday: Boolean
 )
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun WeekdaysHeader() {
     val weekdays = listOf(DayOfWeek.SUNDAY, DayOfWeek.MONDAY, DayOfWeek.TUESDAY, 

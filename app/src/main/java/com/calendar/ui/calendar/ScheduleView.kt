@@ -294,7 +294,7 @@ fun ScheduleCard(
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    text = "$startTime - $endTime",
+                    text = if (schedule.isAllDay) "全日" else "$startTime - $endTime",
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = FontWeight.Medium
