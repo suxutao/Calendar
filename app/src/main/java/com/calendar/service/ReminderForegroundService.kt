@@ -263,6 +263,7 @@ class ReminderForegroundService : Service() {
         createNotificationChannel(this)
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun createForegroundNotification(): Notification? {
         return try {
             val intent = Intent(this, MainActivity::class.java)
@@ -280,7 +281,6 @@ class ReminderForegroundService : Service() {
 
             NotificationCompat.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.mipmap.ic_launcher)
-                .setContentTitle("我的日历")
                 .setContentText(dateInfo)
                 .setPriority(NotificationCompat.PRIORITY_MIN)
                 .setOngoing(true)

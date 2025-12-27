@@ -45,6 +45,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
@@ -457,11 +458,24 @@ fun DateCellImproved(
             verticalArrangement = Arrangement.Center,
             modifier = Modifier.padding(2.dp)
         ) {
+            val underlineColor = MaterialTheme.colorScheme.primary
+
             Text(
                 text = date.dayOfMonth.toString(),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = if (calendarDay.isToday || isSelected) FontWeight.Bold else FontWeight.Normal,
-                color = selectedTextColor
+                color = selectedTextColor,
+                modifier = Modifier.drawWithContent {
+                    drawContent()
+                    if (scheduleCount > 0) {
+                        drawLine(
+                            color = underlineColor,
+                            start = androidx.compose.ui.geometry.Offset(0f, size.height),
+                            end = androidx.compose.ui.geometry.Offset(size.width, size.height),
+                            strokeWidth = 2.5f
+                        )
+                    }
+                }
             )
 
             if (showLunarCalendar && lunarDate.isNotEmpty()) {
@@ -470,36 +484,6 @@ fun DateCellImproved(
                     style = MaterialTheme.typography.labelSmall,
                     color = if (isSelected) selectedTextColor.copy(alpha = 0.8f) else textColor.copy(alpha = 0.7f)
                 )
-            }
-
-            if (scheduleCount > 0) {
-                Spacer(modifier = Modifier.height(2.dp))
-                Row(
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    repeat(minOf(scheduleCount, 3)) {
-                        Box(
-                            modifier = Modifier
-                                .size(4.dp)
-                                .clip(CircleShape)
-                                .background(
-                                    if (isSelected) MaterialTheme.colorScheme.onPrimary
-                                    else MaterialTheme.colorScheme.primary
-                                )
-                        )
-                        if (it < minOf(scheduleCount, 3) - 1) {
-                            Spacer(modifier = Modifier.width(2.dp))
-                        }
-                    }
-                    if (scheduleCount > 3) {
-                        Text(
-                            text = "+",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = if (isSelected) selectedTextColor.copy(alpha = 0.8f) else textColor.copy(alpha = 0.7f)
-                        )
-                    }
-                }
             }
         }
     }

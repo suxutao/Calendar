@@ -296,14 +296,8 @@ fun ScheduleCard(
 
     val startMinutes = startTime.hour * 60 + startTime.minute
     val endMinutes = endTime.hour * 60 + endTime.minute
-    val itemHeight = maxOf((endMinutes - startMinutes).dp, 50.dp)
+    val itemHeight = maxOf((endMinutes - startMinutes).dp, 60.dp)
     val topOffset = startMinutes.dp
-
-    val columnCount = calculateColumnCount(schedules = schedules, currentIndex = index)
-    val columnWidth = 1f / columnCount
-    val startColumn = calculateStartColumn(schedules = schedules, currentIndex = index)
-    val cardOffset = (startColumn * columnWidth * 100).toInt() / 100f + 0.02f
-    val cardWidth = columnWidth - 0.04f
 
     val containerColor = if (schedule.isAllDay) {
         MaterialTheme.colorScheme.secondaryContainer
@@ -325,9 +319,9 @@ fun ScheduleCard(
         Box(
             modifier = Modifier
                 .offset(y = topOffset)
-                .fillMaxWidth(cardWidth)
+                .fillMaxWidth()
                 .height(itemHeight)
-                .padding(start = (cardOffset * 100).dp.coerceAtMost(16.dp))
+                .padding(end = 8.dp)
         ) {
             Surface(
                 modifier = Modifier
@@ -363,7 +357,7 @@ fun ScheduleCard(
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.SemiBold,
                                 color = contentColor,
-                                maxLines = 1,
+                                maxLines = 2,
                                 overflow = TextOverflow.Ellipsis
                             )
 
