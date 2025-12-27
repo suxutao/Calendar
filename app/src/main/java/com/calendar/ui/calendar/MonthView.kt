@@ -458,8 +458,6 @@ fun DateCellImproved(
             verticalArrangement = Arrangement.Center,
             modifier = Modifier.padding(2.dp)
         ) {
-            val underlineColor = MaterialTheme.colorScheme.primary
-
             Text(
                 text = date.dayOfMonth.toString(),
                 style = MaterialTheme.typography.bodyMedium,
@@ -469,10 +467,10 @@ fun DateCellImproved(
                     drawContent()
                     if (scheduleCount > 0) {
                         drawLine(
-                            color = underlineColor,
+                            color = selectedTextColor,
                             start = androidx.compose.ui.geometry.Offset(0f, size.height),
                             end = androidx.compose.ui.geometry.Offset(size.width, size.height),
-                            strokeWidth = 2.5f
+                            strokeWidth = 3.5f
                         )
                     }
                 }
