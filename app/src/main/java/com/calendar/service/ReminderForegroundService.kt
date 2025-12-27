@@ -34,6 +34,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import androidx.core.content.edit
 
 class ReminderForegroundService : Service() {
 
@@ -168,7 +169,7 @@ class ReminderForegroundService : Service() {
                     }
                     currentTime < reminderTime - missedWindow -> {
                         Log.d(TAG, "  Resetting notification flag for future reminder")
-                        prefs.edit().putBoolean(notifyKey, false).apply()
+                        prefs.edit { putBoolean(notifyKey, false) }
                     }
                     hasNotified -> {
                         Log.d(TAG, "  Already notified, skipping")

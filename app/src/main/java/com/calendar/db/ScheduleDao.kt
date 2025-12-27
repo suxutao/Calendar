@@ -22,6 +22,9 @@ interface ScheduleDao {
     @Query("SELECT * FROM schedules WHERE id = :id")
     suspend fun getById(id: Long): Schedule?
 
+    @Query("SELECT * FROM schedules WHERE id = :id")
+    fun getScheduleByIdSync(id: Long): Schedule?
+
     // 按创建时间倒序查询所有日程
     @Query("SELECT * FROM schedules ORDER BY createTime DESC")
     fun getAll(): Flow<List<Schedule>>
