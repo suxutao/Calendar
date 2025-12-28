@@ -67,6 +67,7 @@ import java.time.format.DateTimeFormatter
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
+@androidx.annotation.RequiresPermission(android.Manifest.permission.SCHEDULE_EXACT_ALARM)
 @Composable
 fun AddScheduleScreen(
     selectedDate: LocalDate,
@@ -284,7 +285,7 @@ fun AddScheduleScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             Button(
-                onClick = {
+                onClick =  {
                     if (title.text.isBlank()) {
                         showToast(context, "请输入日程标题")
                         return@Button

@@ -2,7 +2,6 @@ package com.calendar.model
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.calendar.model.ReminderType
 
 @Entity(tableName = "schedules")
 data class Schedule(

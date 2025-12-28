@@ -1,5 +1,6 @@
 package com.calendar.receiver
 
+import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -7,12 +8,12 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import androidx.annotation.RequiresPermission
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.calendar.MainActivity
 import com.calendar.R
 import com.calendar.db.AppDatabase
-import com.calendar.model.Schedule
 
 class AlarmReceiver : BroadcastReceiver() {
 
@@ -23,6 +24,7 @@ class AlarmReceiver : BroadcastReceiver() {
         private const val TAG = "AlarmReceiver"
     }
 
+    @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
     override fun onReceive(context: Context, intent: Intent?) {
         if (intent?.action != ACTION_SHOW_REMINDER) return
 
@@ -32,6 +34,7 @@ class AlarmReceiver : BroadcastReceiver() {
         showNotification(context, scheduleId)
     }
 
+    @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
     private fun showNotification(context: Context, scheduleId: Long) {
         createNotificationChannel(context)
 

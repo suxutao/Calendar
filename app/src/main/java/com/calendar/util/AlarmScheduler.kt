@@ -1,11 +1,13 @@
 package com.calendar.util
 
+import android.Manifest
 import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresPermission
 import com.calendar.model.ReminderType
 import com.calendar.model.Schedule
 import com.calendar.receiver.AlarmReceiver
@@ -16,6 +18,7 @@ object AlarmScheduler {
     private const val MINUTE_IN_MILLIS = 60 * 1000L
     private const val DAY_IN_MINUTES = 24 * 60
 
+    @RequiresPermission(Manifest.permission.SCHEDULE_EXACT_ALARM)
     fun scheduleReminder(context: Context, schedule: Schedule) {
         if (schedule.reminderType == ReminderType.NONE) {
             Log.d(TAG, "Schedule '${schedule.title}' has no reminder, skipping")
@@ -43,19 +46,11 @@ object AlarmScheduler {
         )
 
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                alarmManager.setExactAndAllowWhileIdle(
-                    AlarmManager.RTC_WAKEUP,
-                    reminderTime,
-                    pendingIntent
-                )
-            } else {
-                alarmManager.setExact(
-                    AlarmManager.RTC_WAKEUP,
-                    reminderTime,
-                    pendingIntent
-                )
-            }
+            alarmManager.setExactAndAllowWhileIdle(
+                AlarmManager.RTC_WAKEUP,
+                reminderTime,
+                pendingIntent
+            )
             Log.i(TAG, "Scheduled alarm for '${schedule.title}' at $reminderTime")
         } catch (e: SecurityException) {
             Log.e(TAG, "Failed to schedule exact alarm, falling back to inexact", e)
@@ -92,6 +87,7 @@ object AlarmScheduler {
         }
     }
 
+    @RequiresPermission(Manifest.permission.SCHEDULE_EXACT_ALARM)
     fun rescheduleReminder(context: Context, schedule: Schedule) {
         cancelReminder(context, schedule.id)
         scheduleReminder(context, schedule)

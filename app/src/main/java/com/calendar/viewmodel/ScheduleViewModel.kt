@@ -34,9 +34,10 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     fun setSelectedDate(date: LocalDate) {
         _selectedDate.value = date
     }
-    
+
+    @androidx.annotation.RequiresPermission(android.Manifest.permission.SCHEDULE_EXACT_ALARM)
     fun addSchedule(schedule: Schedule) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(Dispatchers.IO)  {
             repository.add(schedule)
             AlarmScheduler.scheduleReminder(getApplication(), schedule)
             try {
@@ -45,7 +46,8 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
             }
         }
     }
-    
+
+    @androidx.annotation.RequiresPermission(android.Manifest.permission.SCHEDULE_EXACT_ALARM)
     fun updateSchedule(schedule: Schedule) {
         viewModelScope.launch(Dispatchers.IO) {
             repository.edit(schedule)
